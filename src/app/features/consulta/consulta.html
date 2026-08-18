@@ -1,0 +1,276 @@
+<div class="diagnostico-container">
+  <!-- Header con Stepper -->
+  <div class="stepper-header">
+    <div class="stepper-title">
+      <h2><i class="bi bi-heart-pulse"></i> Diagnosticar Mascota</h2>
+      <span class="cita-badge" *ngIf="vieneDeCita">Desde Cita {{ consulta.citaCodigo }}</span>
+    </div>
+    <div class="stepper">
+      <div class="step" [class.active]="pasoActual >= 1" [class.completed]="pasoActual > 1" (click)="irPaso(1)">
+        <div class="step-number">1</div>
+        <span class="step-label">Paciente</span>
+      </div>
+      <div class="step-line" [class.active]="pasoActual > 1"></div>
+      <div class="step" [class.active]="pasoActual >= 2" [class.completed]="pasoActual > 2" (click)="irPaso(2)">
+        <div class="step-number">2</div>
+        <span class="step-label">Diagnóstico</span>
+      </div>
+      <div class="step-line" [class.active]="pasoActual > 2"></div>
+      <div class="step" [class.active]="pasoActual >= 3">
+        <div class="step-number">3</div>
+        <span class="step-label">Receta</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PASO 1: Paciente y Veterinario ==================== -->
+  <div class="step-content" *ngIf="pasoActual === 1">
+    <div class="paso-header">
+      <h3><i class="bi bi-person-badge"></i> Información del Paciente y Veterinario</h3>
+      <p class="paso-desc">Seleccione o confirme los datos del paciente y del veterinario que atiende.</p>
+    </div>
+
+    <div class="info-grid">
+      <!-- Alerta: datos forzados desde la cita (Normalización B) -->
+      <div class="alert alert-info d-flex align-items-center mb-3" *ngIf="vieneDeCita">
+        <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+        <div>Paciente y veterinario se asignan automáticamente desde la cita seleccionada. No se pueden modificar para mantener la coherencia de datos.</div>
+      </div>
+
+      <!-- Selección de Cita (si no viene de cita) -->
+      <div class="select-section" *ngIf="!vieneDeCita">
+        <div class="paso-header mb-3">
+          <h4 class="text-primary mb-1"><i class="bi bi-calendar-check"></i> Seleccione la Cita a Atender</h4>
+          <p class="small text-muted m-0">Elija al paciente de la lista de citas pendientes para iniciar el diagnóstico.</p>
+        </div>
+        
+        <!-- Chips de Días Disponibles -->
+        <div class="d-flex flex-wrap gap-2 mb-4" *ngIf="diasDisponibles.length > 0">
+          <button 
+            *ngFor="let dia of diasDisponibles"
+            class="btn btn-sm rounded-pill fw-bold px-3 shadow-sm"
+            [ngClass]="fechaFiltro === dia ? 'btn-primary' : 'btn-outline-secondary'"
+            (click)="filtrarCitasPorFecha(dia)"
+          >
+            <i class="bi bi-calendar-day me-1"></i> {{ dia | date:'mediumDate' }}
+          </button>
+        </div>
+
+        <div class="citas-grid mb-4">
+          <div *ngIf="citasPendientes.length === 0" class="alert alert-warning w-100 mb-0">
+            <i class="bi bi-emoji-frown me-2"></i> No hay citas pendientes para atender en este momento.
+          </div>
+          
+          <div 
+            class="cita-card" 
+            *ngFor="let c of citasPendientes" 
+            [class.selected]="consulta.citaCodigo === c.codigoCita"
+            (click)="seleccionarCita(c.codigoCita)"
+          >
+            <div class="cita-card-icon">
+              <i class="bi bi-calendar-event"></i>
+            </div>
+            <div class="cita-card-info">
+              <h5>{{ c.nombrePaciente }}</h5>
+              <span class="text-muted small d-block">Dr/a. {{ c.nombreVeterinario }}</span>
+              <span class="cita-time badge bg-light text-dark mt-1"><i class="bi bi-clock me-1"></i>{{ c.fechaHora | date:'shortTime' }}</span>
+            </div>
+            <div class="cita-card-check">
+              <i class="bi bi-check-circle-fill"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjeta de Paciente -->
+      <div class="info-card paciente-card" *ngIf="mascotaInfo">
+        <div class="info-card-header paciente-header">
+          <div class="card-icon"><i class="bi bi-heart-pulse-fill"></i></div>
+          <div>
+            <h4>{{ mascotaInfo.nombre }}</h4>
+            <span class="code-badge">{{ mascotaInfo.codigoPaciente }}</span>
+          </div>
+        </div>
+        <div class="info-card-body">
+          <div class="detail-row">
+            <span class="detail-label">Especie</span>
+            <span class="detail-value">{{ mascotaInfo.especie || 'No registrada' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Raza</span>
+            <span class="detail-value">{{ mascotaInfo.raza || 'No registrada' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Edad</span>
+            <span class="detail-value">{{ mascotaInfo.edadCalculada ? mascotaInfo.edadCalculada + ' años' : 'No registrada' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Peso</span>
+            <span class="detail-value">{{ mascotaInfo.peso ? mascotaInfo.peso + ' kg' : 'No registrado' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Propietario</span>
+            <span class="detail-value">{{ mascotaInfo.clienteNombreCompleto }} ({{ mascotaInfo.clienteDni }})</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjeta de Veterinario -->
+      <div class="info-card vet-card" *ngIf="veterinarioInfo">
+        <div class="info-card-header vet-header">
+          <div class="card-icon"><i class="bi bi-person-badge-fill"></i></div>
+          <div>
+            <h4>{{ veterinarioInfo.nombres }}</h4>
+            <span class="code-badge">DNI: {{ veterinarioInfo.dni }}</span>
+          </div>
+        </div>
+        <div class="info-card-body">
+          <div class="detail-row">
+            <span class="detail-label">Especialidad</span>
+            <span class="detail-value">{{ veterinarioInfo.especialidad || 'General' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Celular</span>
+            <span class="detail-value">{{ veterinarioInfo.celular || 'No registrado' }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Correo</span>
+            <span class="detail-value">{{ veterinarioInfo.correo || 'No registrado' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fecha -->
+    <div class="row mt-3">
+      <div class="col-md-4">
+        <label class="form-label fw-bold"><i class="bi bi-calendar-event"></i> Fecha de Atención:</label>
+        <input type="date" class="form-control" [(ngModel)]="consulta.fecha" />
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <div></div>
+      <button class="btn btn-primary btn-next" (click)="irPaso(2)">
+        Siguiente: Diagnóstico <i class="bi bi-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== PASO 2: Diagnóstico ==================== -->
+  <div class="step-content" *ngIf="pasoActual === 2">
+    <div class="paso-header">
+      <h3><i class="bi bi-clipboard2-pulse"></i> Diagnóstico Clínico</h3>
+      <p class="paso-desc" *ngIf="mascotaInfo">Diagnosticando a <strong>{{ mascotaInfo.nombre }}</strong></p>
+    </div>
+
+    <div class="diagnostico-form">
+      <div class="row g-3">
+        <div class="col-md-9">
+          <label class="form-label fw-bold text-primary">Motivo de la Consulta:</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="consulta.motivo"
+            placeholder="Ej: Vacunación, Decaimiento, Control..."
+          />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold text-primary">Peso Actual (kg):</label>
+          <input
+            type="number"
+            class="form-control"
+            [(ngModel)]="consulta.peso"
+            step="0.1"
+            placeholder="Ej: 12.5"
+          />
+        </div>
+
+        <div class="col-12">
+          <div class="form-section">
+            <label class="form-label fw-bold text-primary"><i class="bi bi-search"></i> Diagnóstico Clínico:</label>
+            <textarea
+              class="form-control"
+              [(ngModel)]="consulta.diagnostico"
+              rows="3"
+              placeholder="Describa el diagnóstico médico..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-section">
+            <label class="form-label fw-bold text-primary"><i class="bi bi-capsule"></i> Protocolo de Tratamiento:</label>
+            <textarea
+              class="form-control"
+              [(ngModel)]="consulta.tratamiento"
+              rows="3"
+              placeholder="Describa el tratamiento a seguir..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="form-section obs-section">
+            <label class="form-label fw-bold"><i class="bi bi-journal-text"></i> Observaciones / Anamnesis (Opcional):</label>
+            <textarea
+              class="form-control"
+              [(ngModel)]="consulta.observaciones"
+              rows="2"
+              placeholder="Notas adicionales..."
+            ></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary btn-back" (click)="irPaso(1)">
+        <i class="bi bi-arrow-left"></i> Volver
+      </button>
+      <button class="btn btn-primary btn-next" (click)="irPaso(3)">
+        Siguiente: Receta <i class="bi bi-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== PASO 3: Receta Médica ==================== -->
+  <div class="step-content" *ngIf="pasoActual === 3">
+    <div class="paso-header">
+      <h3><i class="bi bi-prescription2"></i> Receta Médica</h3>
+      <p class="paso-desc">Agregue los medicamentos y productos para la receta. Este paso es opcional.</p>
+    </div>
+
+    <!-- Nueva Receta Médica (Sin Inventario) -->
+    <div class="row g-3 mt-2">
+      <div class="col-12">
+        <label class="form-label fw-bold text-primary"><i class="bi bi-capsule"></i> Medicamentos a Recetar:</label>
+        <textarea
+          class="form-control"
+          [(ngModel)]="recetaMedica.medicamentos"
+          rows="4"
+          placeholder="Ej: Amoxicilina 500mg, Meloxicam 2mg..."
+        ></textarea>
+      </div>
+
+      <div class="col-12 mt-3">
+        <label class="form-label fw-bold text-primary"><i class="bi bi-list-check"></i> Indicaciones y Dosis:</label>
+        <textarea
+          class="form-control"
+          [(ngModel)]="recetaMedica.indicaciones"
+          rows="4"
+          placeholder="Ej: Dar 1 pastilla cada 8 horas por 5 días..."
+        ></textarea>
+      </div>
+    </div>
+
+    <div class="step-actions">
+      <button class="btn btn-outline-secondary btn-back" (click)="irPaso(2)">
+        <i class="bi bi-arrow-left"></i> Volver
+      </button>
+      <button class="btn btn-success btn-registrar" (click)="registrar()">
+        <i class="bi bi-check-circle"></i> Registrar Diagnóstico
+      </button>
+    </div>
+  </div>
+</div>

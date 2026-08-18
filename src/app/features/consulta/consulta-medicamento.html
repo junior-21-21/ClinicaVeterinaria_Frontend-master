@@ -1,0 +1,104 @@
+<form class="row g-3 mt-3">
+
+  <!-- Buscar medicamento -->
+  <div class="col-md-12">
+    <label class="form-label">Buscar producto (por ID o nombre):</label>
+    <div class="input-group">
+      <input
+        type="text"
+        class="form-control"
+        [(ngModel)]="filtro"
+        name="filtro"
+        placeholder="Ej. Consulta General o 101"
+      />
+      <button type="button" class="btn btn-outline-primary" (click)="filtrar()">Buscar</button>
+    </div>
+  </div>
+
+  <!-- Lista de productos filtrados -->
+  <div class="col-12" *ngIf="productosFiltrados.length > 0; else sinProductos">
+    <table class="table table-sm table-bordered table-hover mt-3">
+      <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Stock</th>
+        <th>Cantidad a asociar</th>
+        <th>Acción</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let prod of productosFiltrados">
+        <td>{{ prod.codigoBarras }}</td>
+        <td>{{ prod.nombre }}</td>
+        <td>
+            <span *ngIf="prod.tipoInventario === 'SERVICIO'">N/A</span>
+            <span *ngIf="prod.tipoInventario !== 'SERVICIO'">{{ prod.stockActual }}</span>
+        </td>
+        <td style="width:120px;">
+          <input
+            type="number"
+            min="1"
+            [max]="prod.tipoInventario === 'SERVICIO' ? 10 : prod.stockActual"
+            [(ngModel)]="prod.cantidadAsociar"
+            name="cantidad{{prod.codigoBarras}}"
+            class="form-control"
+          />
+        </td>
+        <td>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-success"
+            (click)="asociarProducto(prod)"
+            [disabled]="
+              !prod.cantidadAsociar ||
+              prod.cantidadAsociar < 1 ||
+              (prod.tipoInventario !== 'SERVICIO' && prod.cantidadAsociar > prod.stockActual)
+            "
+          >
+            Asociar
+          </button>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Lista de productos ya asociados -->
+  <div class="col-12 mt-4" *ngIf="productosAsociados.length > 0; else sinAsociados">
+    <h5>Productos/Servicios Asociados</h5>
+    <table class="table table-sm table-bordered table-hover mt-2">
+      <thead class="table-light">
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Cantidad</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let prod of productosAsociados">
+        <td>{{ getProducto(prod.codigoBarras)?.codigoBarras || prod.codigoBarras }}</td>
+        <td>{{ getProducto(prod.codigoBarras)?.nombre || 'Desconocido' }}</td>
+        <td>{{ prod.cantidad }}</td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ng-template #sinAsociados>
+    <div class="alert alert-info mt-3">
+      No hay productos/servicios asociados para esta consulta.
+    </div>
+  </ng-template>
+
+  <ng-template #sinProductos>
+    <div class="alert alert-info mt-3">
+      No se encontraron productos.
+    </div>
+  </ng-template>
+
+  <!-- Botón volver -->
+  <div class="col-12 text-end mt-3">
+    <a routerLink="/consultas" class="btn btn-secondary ms-2">Volver</a>
+  </div>
+</form>

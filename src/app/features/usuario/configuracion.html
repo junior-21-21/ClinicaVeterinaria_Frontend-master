@@ -1,0 +1,163 @@
+<div class="container mt-4 mb-5 fade-in">
+  
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="premium-title mb-0">Gestión de Usuarios</h2>
+    <button class="btn btn-primary" (click)="abrirCrear()">
+      <mat-icon class="small-icon">person_add</mat-icon> Nuevo Usuario
+    </button>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="card shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>Foto</th>
+            <th>Usuario</th>
+            <th>Nombres</th>
+            <th>Apellidos</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of usuarios">
+            <td>
+              <img *ngIf="u.fotoUrl" [src]="formatImageUrl(u.fotoUrl)" class="rounded-circle shadow-sm" width="40" height="40" style="object-fit: cover;" alt="Foto">
+              <div *ngIf="!u.fotoUrl" class="bg-primary text-white rounded-circle shadow-sm d-flex justify-content-center align-items-center" style="width: 40px; height: 40px; font-weight: bold;">
+                {{ u.nombres ? u.nombres.charAt(0) : 'U' }}
+              </div>
+            </td>
+            <td>
+              <span class="fw-bold text-primary">{{ u.email }}</span>
+            </td>
+            <td>{{ u.nombres || '-' }}</td>
+            <td>{{ u.apellidos || '-' }}</td>
+            <td>
+              <span class="badge bg-secondary me-1">
+                {{ u.rol?.nombre || u.rol }}
+              </span>
+            </td>
+            <td>
+              <span *ngIf="u.cuentaBloqueada" class="badge bg-danger mb-1 d-block" title="Bloqueado por múltiples intentos de login fallidos">Bloqueado</span>
+              <span *ngIf="u.habilitada === false" class="badge bg-dark mb-1 d-block" title="Inhabilitado manualmente por el administrador">Inhabilitado</span>
+              <span *ngIf="!u.cuentaBloqueada && u.habilitada !== false" class="badge bg-success mb-1 d-block">Activo</span>
+            </td>
+            <td class="text-center">
+              <button class="btn btn-sm btn-outline-secondary me-1" (click)="abrirEditar(u)" title="Editar">
+                <mat-icon class="small-icon">edit</mat-icon>
+              </button>
+              <button class="btn btn-sm btn-warning me-1 text-dark" (click)="abrirCambiarPassword(u)" title="Cambiar Contraseña">
+                <mat-icon class="small-icon">key</mat-icon>
+              </button>
+              <button *ngIf="u.cuentaBloqueada" class="btn btn-sm btn-success me-1 text-white" (click)="desbloquearUsuario(u)" title="Desbloquear Cuenta">
+                <mat-icon class="small-icon">lock_open</mat-icon>
+              </button>
+              <button class="btn btn-sm me-1 text-white" [ngClass]="u.habilitada !== false ? 'btn-secondary' : 'btn-info'" (click)="cambiarEstado(u)" [title]="u.habilitada !== false ? 'Inhabilitar Cuenta' : 'Habilitar Cuenta'">
+                <mat-icon class="small-icon">{{ u.habilitada !== false ? 'person_off' : 'how_to_reg' }}</mat-icon>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="eliminarUsuario(u)" title="Eliminar">
+                <mat-icon class="small-icon">delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="usuarios.length === 0">
+            <td colspan="5" class="text-center py-4 text-muted">
+              No hay usuarios registrados.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODAL FORMULARIO (Crear / Editar) -->
+  <div class="modal-backdrop fade show" *ngIf="modalVisible"></div>
+  <div class="modal fade show d-block" *ngIf="modalVisible" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title">{{ modoEdicion ? 'Editar Usuario' : 'Nuevo Usuario' }}</h5>
+          <button type="button" class="btn-close btn-close-white" (click)="modalVisible = false"></button>
+        </div>
+        <div class="modal-body p-4">
+          <form (ngSubmit)="guardarUsuario()">
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Nombres <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" [(ngModel)]="usuarioSeleccionado.nombres" name="nombres" placeholder="Ej. Juan" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Apellidos</label>
+                <input type="text" class="form-control" [(ngModel)]="usuarioSeleccionado.apellidos" name="apellidos" placeholder="Ej. Pérez">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Foto de Perfil</label>
+              <input type="file" class="form-control" (change)="onFileSelected($event)" accept="image/*">
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold">Correo Electrónico <span class="text-danger">*</span></label>
+              <input type="email" class="form-control" [(ngModel)]="usuarioSeleccionado.email" name="email" placeholder="correo@ejemplo.com" required>
+            </div>
+
+            <div class="mb-3" *ngIf="!modoEdicion">
+              <label class="form-label fw-bold">Contraseña (Temporal) <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input [type]="mostrarPassNuevo ? 'text' : 'password'" class="form-control" [(ngModel)]="usuarioSeleccionado.password" name="password" placeholder="Mínimo 6 caracteres (ej. 123456)" required>
+                <button class="btn btn-outline-secondary" type="button" (click)="mostrarPassNuevo = !mostrarPassNuevo" tabindex="-1">
+                  <mat-icon style="vertical-align: middle; font-size: 20px; width: 20px; height: 20px;">{{ mostrarPassNuevo ? 'visibility_off' : 'visibility' }}</mat-icon>
+                </button>
+              </div>
+            </div>
+
+             <!-- Selección de Roles -->
+             <div class="mb-3">
+                <label class="form-label fw-bold">Rol Principal <span class="text-danger">*</span></label>
+                <select class="form-select" [(ngModel)]="usuarioSeleccionado.rol" name="rol" required>
+                    <option *ngFor="let r of rolesDisponibles" [value]="r">{{ r }}</option>
+                </select>
+             </div>
+
+            <p class="text-muted small"><span class="text-danger">*</span> Campos obligatorios</p>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="button" class="btn btn-secondary" (click)="modalVisible = false">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL PASSWORD -->
+  <div class="modal-backdrop fade show" *ngIf="passwordModalVisible" style="z-index: 1055;"></div>
+  <div class="modal fade show d-block" *ngIf="passwordModalVisible" tabindex="-1" style="z-index: 1060;">
+      <div class="modal-dialog modal-dialog-centered modal-sm">
+          <div class="modal-content shadow-lg">
+              <div class="modal-header bg-warning">
+                  <h5 class="modal-title text-dark">Cambiar Contraseña</h5>
+                  <button type="button" class="btn-close" (click)="passwordModalVisible = false"></button>
+              </div>
+              <div class="modal-body">
+                  <div class="mb-3">
+                      <label class="form-label">Nueva Contraseña (Temporal)</label>
+                      <div class="input-group">
+                        <input [type]="mostrarPassCambio ? 'text' : 'password'" class="form-control" [(ngModel)]="newPassword" placeholder="******">
+                        <button class="btn btn-outline-secondary" type="button" (click)="mostrarPassCambio = !mostrarPassCambio" tabindex="-1">
+                           <mat-icon style="vertical-align: middle; font-size: 20px; width: 20px; height: 20px;">{{ mostrarPassCambio ? 'visibility_off' : 'visibility' }}</mat-icon>
+                        </button>
+                      </div>
+                  </div>
+                  <button class="btn btn-primary w-100" (click)="guardarPassword()">Actualizar</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+</div>

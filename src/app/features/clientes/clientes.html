@@ -1,0 +1,240 @@
+<div class="vet-container">
+  <div class="container py-5">
+    
+    <!-- Alertas Flotantes -->
+    <div *ngIf="mensajeExito" class="alert-float success">
+      <i class="bi bi-check-circle-fill"></i>
+      <span>{{ mensajeExito }}</span>
+    </div>
+    <div *ngIf="mensajeError" class="alert-float error">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span>{{ mensajeError }}</span>
+    </div>
+
+    <div class="row g-5">
+      
+      <!-- COLUMNA IZQUIERDA: FORMULARIO -->
+      <div class="col-lg-4">
+        <div class="card-vet form-card h-100">
+          <!-- Header con Gradiente -->
+          <div class="card-header-vet">
+            <div class="icon-box">
+              <i class="bi" [ngClass]="modoEditar ? 'bi-pencil-square' : 'bi-person-plus-fill'"></i>
+            </div>
+            <h5 class="mb-0">{{ modoEditar ? 'Editar Cliente' : 'Nuevo Cliente' }}</h5>
+          </div>
+
+          <div class="card-body p-4">
+            <form (ngSubmit)="guardar()" #clienteForm="ngForm">
+              
+              <!-- Nombres -->
+              <div class="form-group mb-3">
+                <label>Nombres</label>
+                <div class="input-group-vet">
+                  <span class="icon"><i class="bi bi-person-fill"></i></span>
+                  <input type="text" [(ngModel)]="nuevoCliente.nombres" name="nombres" placeholder="Ej. Junior" required />
+                </div>
+              </div>
+
+              <!-- Apellidos -->
+              <div class="form-group mb-3">
+                <label>Apellidos</label>
+                <div class="input-group-vet">
+                  <span class="icon"><i class="bi bi-person-badge-fill"></i></span>
+                  <input type="text" [(ngModel)]="nuevoCliente.apellidos" name="apellidos" placeholder="Ej. Pérez" required />
+                </div>
+              </div>
+
+              <!-- Fila DNI y Teléfono -->
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <div class="form-group">
+                    <label>DNI</label>
+                    <div class="input-group-vet d-flex">
+                      <input type="text" maxlength="8" class="text-center flex-grow-1" 
+                             [(ngModel)]="nuevoCliente.dni" 
+                             name="dni" 
+                             placeholder="8 dígitos" 
+                             (keyup.enter)="buscarDniExterno()"
+                             required 
+                             style="border-top-right-radius: 0; border-bottom-right-radius: 0;" />
+                      <button type="button" 
+                              class="btn btn-primary px-3" 
+                              (click)="buscarDniExterno()"
+                              [disabled]="buscandoDniExterno"
+                              style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                        <i class="bi" [ngClass]="buscandoDniExterno ? 'bi-hourglass-split' : 'bi-search'"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              <div class="mb-3">
+                <label>Teléfonos</label>
+                <div *ngFor="let tel of nuevoCliente.telefonos; let i = index" class="input-group-vet mb-2 d-flex">
+                  <span class="icon"><i class="bi bi-phone"></i></span>
+                  <input type="text" [(ngModel)]="tel.numero" name="telNumero_{{i}}" placeholder="999..." class="flex-grow-1 border-end-0" required />
+                  <select [(ngModel)]="tel.tipo" name="telTipo_{{i}}" class="form-select border-start-0" style="max-width: 120px;">
+                    <option value="CELULAR">Celular</option>
+                    <option value="CASA">Casa</option>
+                    <option value="TRABAJO">Trabajo</option>
+                  </select>
+                  <button type="button" class="btn btn-danger" (click)="eliminarTelefono(i)"><i class="bi bi-trash"></i></button>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-1" (click)="agregarTelefono()">+ Agregar Teléfono</button>
+              </div>
+              </div>
+
+              <div class="form-group mb-3">
+                <label>Dirección</label>
+                <div class="row g-2">
+                  <div class="col-8">
+                    <input type="text" class="form-control" [(ngModel)]="nuevoCliente.calle" name="calle" placeholder="Calle/Av." />
+                  </div>
+                  <div class="col-4">
+                    <input type="text" class="form-control" [(ngModel)]="nuevoCliente.numero" name="numero" placeholder="N°/Mz" />
+                  </div>
+
+                  <!-- Provincia → select fijo con todas las provincias de Ayacucho -->
+                  <div class="col-6">
+                    <div class="select-vet-wrapper">
+                      <i class="bi bi-map select-icon"></i>
+                      <select
+                        class="form-select select-vet"
+                        [(ngModel)]="nuevoCliente.provincia"
+                        name="provincia"
+                        (ngModelChange)="onProvinciaChange()">
+                        <option value="" disabled selected>Provincia</option>
+                        <option *ngFor="let prov of provincias" [value]="prov">{{ prov }}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Distrito → se habilita y filtra según la provincia elegida -->
+                  <div class="col-6">
+                    <div class="select-vet-wrapper" [class.disabled-wrapper]="!nuevoCliente.provincia">
+                      <i class="bi bi-geo-alt select-icon"></i>
+                      <select
+                        class="form-select select-vet"
+                        [(ngModel)]="nuevoCliente.distrito"
+                        name="distrito"
+                        [disabled]="!nuevoCliente.provincia">
+                        <option value="" disabled selected>
+                          {{ nuevoCliente.provincia ? 'Distrito' : '— Elige provincia —' }}
+                        </option>
+                        <option *ngFor="let dist of distritosFiltrados" [value]="dist">{{ dist }}</option>
+                      </select>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- Botones -->
+              <div class="d-grid gap-2">
+                <button type="submit" class="btn-vet primary">
+                  {{ modoEditar ? 'Guardar Cambios' : 'Registrar Cliente' }}
+                </button>
+                <button *ngIf="modoEditar" type="button" class="btn-vet secondary" (click)="reset()">
+                  Cancelar Edición
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMNA DERECHA: TABLA -->
+      <div class="col-lg-8">
+        <div class="card-vet table-card h-100">
+          <div class="card-header-simple">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-journal-medical text-primary me-2 fs-4"></i>
+              <h5 class="mb-0 text-dark fw-bold">Directorio de Clientes</h5>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <button class="btn btn-sm btn-success" (click)="exportarExcel()">
+                <i class="bi bi-file-earmark-excel-fill me-1"></i>Exportar
+              </button>
+              <span class="badge-count">{{ clientesFiltrados.length }} Clientes</span>
+            </div>
+          </div>
+
+          <!-- Buscador -->
+          <div class="p-3 bg-light border-bottom">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search text-muted"></i>
+              </span>
+              <input type="text" 
+                     class="form-control border-start-0 ps-0" 
+                     placeholder="Buscar por DNI o Nombres..." 
+                     [(ngModel)]="filtroBusqueda" 
+                     (keyup)="filtrar()">
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table-custom">
+              <thead>
+                <tr>
+                  <th class="ps-4">Cliente / Dirección</th>
+                  <th>Teléfono</th>
+                  <th>DNI</th>
+                  <th class="text-center pe-4">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let cliente of clientesFiltrados">
+                  <!-- Cliente Info -->
+                  <td class="ps-4">
+                    <div class="client-name">{{ cliente.nombres }} {{ cliente.apellidos }}</div>
+                    <div class="client-address" *ngIf="cliente.calle || cliente.distrito">
+                      <i class="bi bi-geo-alt me-1"></i>{{ cliente.calle }} {{ cliente.numero ? cliente.numero + ',' : '' }} {{ cliente.distrito }}
+                    </div>
+                  </td>
+                  
+                  <!-- Teléfono -->
+                  <td>
+                    <div *ngIf="cliente.telefonos && cliente.telefonos.length > 0">
+                      <div class="phone-badge mb-1" *ngFor="let t of cliente.telefonos">
+                        <i class="bi bi-whatsapp"></i> {{ t.numero }} <small class="text-white-50">({{t.tipo}})</small>
+                      </div>
+                    </div>
+                    <span class="text-muted small fst-italic" *ngIf="!cliente.telefonos || cliente.telefonos.length === 0">--</span>
+                  </td>
+
+                  <!-- DNI -->
+                  <td>
+                    <span class="dni-badge">{{ cliente.dni }}</span>
+                  </td>
+                  
+                  <!-- Acciones -->
+                  <td class="text-center pe-4">
+                    <div class="action-buttons">
+                        <button class="btn-icon edit" (click)="editar(cliente)" title="Editar">
+                          <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="btn-icon delete" (click)="eliminar(cliente.dni)" title="Eliminar">
+                          <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </div>
+                  </td>
+                </tr>
+                
+                <!-- Estado Vacío -->
+                <tr *ngIf="clientesFiltrados.length === 0">
+                  <td colspan="4" class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>No hay clientes registrados aún.</p>
+                  </td>
+                </tr>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

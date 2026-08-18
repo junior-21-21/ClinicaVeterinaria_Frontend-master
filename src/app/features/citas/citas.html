@@ -1,0 +1,300 @@
+<div class="page-content animate-enter">
+  <!-- Encabezado y Buscador -->
+  <div class="info-card mb-4">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      <div class="icon-wrapper">
+        <mat-icon>calendar_month</mat-icon>
+      </div>
+      <div>
+        <h2 class="section-title m-0">Agenda de Citas</h2>
+        <p class="text-muted m-0">Gestiona las consultas de nuestros pacientes de cuatro patas</p>
+      </div>
+    </div>
+
+    <div class="human-alert d-flex align-items-center gap-3">
+      <mat-icon class="text-primary">lightbulb</mat-icon>
+      <div>
+        <span class="fw-bold d-block mb-1">¡Organizar el día es muy fácil! 🐾</span>
+        <p class="mb-0 small text-muted">
+          Solo haz clic en cualquier <strong>espacio libre</strong> del calendario para agendar una nueva cita. 
+          Si necesitas hacer cambios, toca una cita ya creada para <strong>Reprogramar</strong>, <strong>Cancelar</strong> o generar su <strong>Comprobante</strong>. 
+          (Ojo: las citas ya <span class="badge bg-success-soft">Realizadas</span> no se pueden modificar).
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDARIO -->
+  <div class="calendar-card">
+    <full-calendar [options]="calendarOptions"></full-calendar>
+  </div>
+
+
+</div> <!-- Fin de page-content -->
+
+<!-- Mascotas con IA (Roaming Pets) -->
+<div class="walking-animals-container">
+  <div *ngFor="let pet of roamingPets" 
+       class="ai-pet"
+       [ngStyle]="{
+         'transform': 'translate(' + pet.x + 'px, ' + (pet.y + pet.yOffset) + 'px) scaleX(' + pet.direction + ')',
+         'width': pet.size + 'px',
+         'height': pet.size + 'px'
+       }">
+    
+    <!-- Perro SVG -->
+    <svg *ngIf="pet.type === 'dog'" viewBox="0 0 576 512" fill="currentColor">
+      <path d="M298.1 41.5c-20.4-20.4-53.5-20.4-73.9 0L191.5 74.3c-14.5 14.5-22.6 34.1-22.6 54.6v11.7l-49.9 16.6c-45.7 15.2-76.8 58-76.8 106.1v40.7c0 23.3 10.8 45.3 29.5 59.5l30 22.5c10.3 7.7 16.5 20.1 16.5 33v57c0 17.7 14.3 32 32 32h32c17.7 0 32-14.3 32-32v-51.2l64-16v67.2c0 17.7 14.3 32 32 32h32c17.7 0 32-14.3 32-32V323.8l64 16v56.2c0 17.7 14.3 32 32 32h32c17.7 0 32-14.3 32-32V321.4c17.6-11.4 30.6-28.7 36.3-48.8l16.1-56.5c11.9-41.6-12.2-85-53.8-96.9l-22.2-6.3L298.1 41.5zM128 352a32 32 0 1 1 0-64 32 32 0 1 1 0 64z"/>
+    </svg>
+    
+    <!-- Gato SVG -->
+    <svg *ngIf="pet.type === 'cat'" viewBox="0 0 512 512" fill="currentColor">
+      <path d="M226.5 92.9c14.3 7.3 30.7 11.1 47.5 11.1s33.2-3.8 47.5-11.1l111-57c12.2-6.3 26.9-4 36.6 5.8 9.8 9.8 12.1 24.4 5.8 36.6l-57 111c-7.3 14.3-11.1 30.7-11.1 47.5s3.8 33.2 11.1 47.5l57 111c6.3 12.2 4 26.9-5.8 36.6-9.8 9.8-24.4 12.1-36.6 5.8l-111-57c-14.3-7.3-30.7-11.1-47.5-11.1s-33.2 3.8-47.5 11.1l-111 57c-12.2 6.3-26.9 4-36.6-5.8-9.8-9.8-12.1-24.4-5.8-36.6l57-111c7.3-14.3 11.1-30.7 11.1-47.5s-3.8-33.2-11.1-47.5l-57-111c-6.3-12.2-4-26.9 5.8-36.6 9.8-9.8 24.4-12.1 36.6-5.8l111 57z"/>
+    </svg>
+  </div>
+</div>
+
+<!-- MODAL DE REGISTRO / EDICIÓN -->
+<div class="custom-modal-overlay" *ngIf="mostrarModal">
+  <div class="custom-modal-dialog animate-modal">
+    <div class="custom-modal-content">
+      <div class="modal-header-modern">
+        <div class="d-flex align-items-center gap-2">
+          <mat-icon>{{ esReprogramacion ? 'edit_calendar' : 'event_available' }}</mat-icon>
+          <h4 class="m-0 fw-bold">{{ esReprogramacion ? 'Reprogramar Cita' : 'Agendar Nueva Consulta' }}</h4>
+        </div>
+        <button type="button" class="btn-close-modern" (click)="cerrarModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body p-4">
+        <!-- Paso 1: Buscar Dueño/Paciente -->
+        <div class="mb-4 p-3 bg-light rounded border" *ngIf="!esReprogramacion">
+          <label class="form-label fw-bold text-uppercase text-secondary small"
+            >1. Buscar Paciente</label
+          >
+          <div class="input-group mb-2">
+            <span class="input-group-text bg-white"
+              ><i class="bi bi-search"></i
+            ></span>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Ingrese DNI (8 dígitos) y presione ENTER o espere..."
+              [(ngModel)]="dniBusqueda"
+              (ngModelChange)="buscarCliente()"
+              (keyup.enter)="buscarCliente()"
+              autocomplete="off"
+              maxlength="8"
+            />
+            <button
+              class="btn btn-primary"
+              (click)="buscarCliente()"
+              [disabled]="buscandoCliente"
+            >
+              {{ buscandoCliente ? '...' : 'Buscar' }}
+            </button>
+            
+            <!-- Lista de Sugerencias -->
+            <ul *ngIf="clientesSugeridos.length > 0" class="list-group position-absolute w-100 shadow" style="top: 100%; z-index: 1000;">
+              <li *ngFor="let cliente of clientesSugeridos" 
+                  class="list-group-item list-group-item-action cursor-pointer"
+                  (click)="seleccionarCliente(cliente)">
+                <strong>{{ cliente.dni }}</strong> - {{ cliente.nombres }} {{ cliente.apellidos }}
+              </li>
+            </ul>
+          </div>
+
+          <!-- Resultado Búsqueda -->
+          <div
+            *ngIf="nombreClienteEncontrado"
+            class="alert alert-success d-flex align-items-center mb-0 py-2"
+          >
+            <i class="bi bi-person-check-fill fs-4 me-2"></i>
+            <div>
+              <small class="d-block text-muted">Cliente Encontrado:</small>
+              <span class="fw-bold">{{ nombreClienteEncontrado }}</span>
+            </div>
+          </div>
+
+          <div
+            *ngIf="clienteNoEncontrado && dniBusqueda.length === 8"
+            class="alert alert-warning d-flex align-items-center justify-content-between mb-0 py-2"
+          >
+            <div class="d-flex align-items-center">
+              <i class="bi bi-person-x-fill fs-4 me-2"></i>
+              <div>
+                <span class="fw-bold">Cliente no registrado</span>
+                <small class="d-block">¿Desea registrarlo ahora?</small>
+              </div>
+            </div>
+            <a
+              routerLink="/clientes"
+              (click)="cerrarModal()"
+              class="btn btn-sm btn-outline-dark fw-bold"
+            >
+              <i class="bi bi-person-plus-fill"></i> Registrar
+            </a>
+          </div>
+        </div>
+
+        <form (ngSubmit)="guardarCita()" class="row g-3">
+          <!-- Selección de Paciente -->
+          <div class="col-md-12" *ngIf="!esReprogramacion">
+            <label class="form-label fw-semibold"
+              >Paciente (Paciente) <span class="text-danger">*</span></label
+            >
+            <select
+              class="form-select"
+              [(ngModel)]="nuevaCita.pacienteCodigo"
+              name="pacienteCodigo"
+              required
+              [disabled]="pacientes.length === 0"
+            >
+              <option value="0" disabled selected>
+                {{ pacientes.length > 0 ? 'Seleccione una Paciente...' : '---
+                Busque por DNI primero ---' }}
+              </option>
+              <option *ngFor="let m of pacientes" [value]="m.codigoPaciente">
+                {{ m.nombre }} ({{ m.especie }} - {{ m.raza }})
+              </option>
+            </select>
+          </div>
+
+          <div class="col-md-12" *ngIf="esReprogramacion">
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>
+              <strong>Nota:</strong> Para reprogramar, debe re-ingresar los
+              datos de Paciente y veterinario si no se cargaron automáticamente.
+            </div>
+            <!-- Reutilizamos el select si es necesario, pero idealmente se poblaría. Para MPV, el usuario rellena. -->
+          </div>
+
+          <!-- Fecha y Hora -->
+          <div class="col-12 col-md-4">
+            <label class="form-label fw-semibold"
+              >Fecha <span class="text-danger">*</span></label
+            >
+            <input
+              type="date"
+              class="form-control bg-light"
+              [(ngModel)]="nuevaCita.fecha"
+              name="fecha"
+              required
+            />
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label fw-semibold"
+              >Hora <span class="text-danger">*</span></label
+            >
+            <input
+              type="time"
+              class="form-control"
+              [(ngModel)]="nuevaCita.hora"
+              name="hora"
+              required
+              min="08:00"
+              max="20:00"
+            />
+          </div>
+
+          <div class="col-12 col-md-4">
+            <label class="form-label fw-semibold"
+              >Duración Est. <span class="text-danger">*</span></label
+            >
+            <select
+              class="form-select"
+              [(ngModel)]="nuevaCita.duracionMinutos"
+              name="duracion"
+              required
+            >
+              <option *ngFor="let d of duraciones" [value]="d.value">
+                {{ d.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Filtro Especialidad y Veterinario -->
+          <div class="col-12 col-md-6">
+            <label class="form-label fw-semibold">Especialidad (Filtro)</label>
+            <select
+              class="form-select"
+              [(ngModel)]="especialidadSeleccionada"
+              name="especialidad"
+              (change)="filtrarVeterinarios()"
+            >
+              <option value="">Todas</option>
+              <option *ngFor="let e of especialidades" [value]="e.nombre">
+                {{ e.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label fw-semibold"
+              >Veterinario <span class="text-danger">*</span></label
+            >
+            <select
+              class="form-select"
+              [(ngModel)]="nuevaCita.veterinarioDni"
+              name="veterinarioDni"
+              required
+            >
+              <option value="0" disabled selected>
+                Seleccione un doctor...
+              </option>
+              <option *ngFor="let v of veterinariosFiltrados" [value]="v.dni">
+                {{ v.nombres }} {{ v.apellidos }} ({{ v.especialidad ||
+                'General' }})
+              </option>
+            </select>
+            <small
+              class="text-danger"
+              *ngIf="veterinariosFiltrados.length === 0 && especialidadSeleccionada"
+            >
+              No hay veterinarios con esta especialidad.
+            </small>
+          </div>
+
+          <!-- Motivo -->
+          <div class="col-12">
+            <label class="form-label fw-semibold"
+              >Motivo de consulta <span class="text-danger">*</span></label
+            >
+            <textarea
+              class="form-control"
+              rows="2"
+              placeholder="Ej. Vacunación, Fiebre, Control..."
+              [(ngModel)]="nuevaCita.motivo"
+              name="motivo"
+              required
+            ></textarea>
+          </div>
+
+          <div class="col-12 text-end mt-4 pt-3 border-top">
+            <button
+              type="button"
+              class="btn btn-secondary me-2"
+              (click)="cerrarModal()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="btn btn-success px-4"
+              [disabled]="(nuevaCita.pacienteCodigo === '' && !esReprogramacion) || nuevaCita.veterinarioDni === '' || !nuevaCita.motivo"
+            >
+              <i
+                class="bi"
+                [ngClass]="esReprogramacion ? 'bi-save' : 'bi-check-circle'"
+              ></i>
+              {{ esReprogramacion ? 'Guardar Cambios' : 'Confirmar Cita' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,206 @@
+<!-- Spinner global -->
+<app-spinner></app-spinner>
+
+<!-- BARRA SUPERIOR (TOOLBAR) -->
+<mat-toolbar class="main-toolbar">
+  <button mat-icon-button (click)="toggleSidebar()" class="toggle-btn">
+    <mat-icon>{{ isCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
+  </button>
+  
+  <span class="logo-section">
+    <img src="logo_petyzoos.png" alt="PetyZoos" class="logo-img">
+    <span class="brand-name">
+        PetyZoos
+    </span>
+  </span>
+  
+  <span class="spacer"></span>
+
+  <!-- Info usuario -->
+  <div *ngIf="usuario" class="user-section">
+    <span class="user-greeting">Hola, {{ usuario.nombres }}</span>
+    <button mat-icon-button [matMenuTriggerFor]="menuUser" class="avatar-btn">
+      <img *ngIf="imagenPerfil" [src]="imagenPerfil" class="avatar-toolbar-img">
+      <div *ngIf="!imagenPerfil" class="avatar-sm">
+        {{ usuario?.nombres?.charAt(0) || 'U' }}
+      </div>
+    </button>
+    
+    <mat-menu #menuUser="matMenu" xPosition="before" class="user-menu-panel">
+      <div class="menu-profile-header" (click)="$event.stopPropagation()">
+        <div class="menu-avatar">
+          <img *ngIf="imagenPerfil" [src]="imagenPerfil" class="menu-avatar-img">
+          <span *ngIf="!imagenPerfil" class="menu-avatar-letra">{{ usuario?.nombres?.charAt(0) }}</span>
+        </div>
+        <div class="menu-user-info">
+          <strong>{{ usuario.nombres }}</strong>
+          <small>{{ usuario.email }}</small>
+          <span class="menu-role">{{ rolLabel }}</span>
+        </div>
+      </div>
+      <mat-divider></mat-divider>
+      <button mat-menu-item routerLink="/perfil">
+        <mat-icon>account_circle</mat-icon>
+        <span>Mi Perfil</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item (click)="logout()">
+        <mat-icon color="warn">logout</mat-icon>
+        <span>Cerrar Sesion</span>
+      </button>
+    </mat-menu>
+  </div>
+</mat-toolbar>
+
+<!-- CONTENEDOR PRINCIPAL -->
+<mat-sidenav-container class="sidenav-container" autosize>
+  
+  <!-- SIDEBAR -->
+  <mat-sidenav #sidenav
+               [opened]="true" 
+               mode="side"
+               class="app-sidenav"
+               [class.collapsed]="isCollapsed">
+    
+    <div class="sidebar-inner">
+      
+      <!-- Perfil -->
+      <div class="sidebar-profile">
+        <div class="avatar-circle" [class.avatar-small]="isCollapsed">
+          <img *ngIf="imagenPerfil" [src]="imagenPerfil" class="sidebar-avatar-img">
+          <span *ngIf="!imagenPerfil">{{ usuario?.nombres?.charAt(0) || 'U' }}</span>
+        </div>
+        <div class="profile-info" *ngIf="!isCollapsed">
+          <span class="profile-name">{{ usuario?.nombres }}</span>
+          <span class="profile-role">{{ rolLabel }}</span>
+        </div>
+      </div>
+
+      <div class="sidebar-divider" *ngIf="!isCollapsed"></div>
+
+      <!-- Navegacion -->
+      <nav class="sidebar-nav">
+
+        <span class="nav-section-label" *ngIf="!isCollapsed">MENU</span>
+
+        <a *ngIf="esAdmin()" routerLink="/dashboard" routerLinkActive="active" 
+           [matTooltip]="isCollapsed ? 'Dashboard' : ''" matTooltipPosition="right"
+           class="nav-item">
+          <mat-icon>dashboard</mat-icon>
+          <span *ngIf="!isCollapsed">Dashboard</span>
+        </a>
+
+        <a *ngIf="esAdmin() || esVeterinario()" routerLink="/citas" routerLinkActive="active" 
+           [matTooltip]="isCollapsed ? 'Citas' : ''" matTooltipPosition="right"
+           class="nav-item">
+          <mat-icon>calendar_today</mat-icon>
+          <span *ngIf="!isCollapsed">Citas</span>
+        </a>
+
+        <a *ngIf="esAdmin() || esVeterinario()" routerLink="/consultas" routerLinkActive="active" 
+           [matTooltip]="isCollapsed ? 'Diagnósticos' : ''" matTooltipPosition="right"
+           class="nav-item">
+          <mat-icon>medical_services</mat-icon>
+          <span *ngIf="!isCollapsed">Diagnósticos</span>
+        </a>
+
+        <a routerLink="/historial-clinico" routerLinkActive="active" 
+           [matTooltip]="isCollapsed ? 'Historial Clínico' : ''" matTooltipPosition="right"
+           class="nav-item">
+          <mat-icon>history</mat-icon>
+          <span *ngIf="!isCollapsed">Historial Clínico</span>
+        </a>
+
+        <a *ngIf="esAdmin() || esRecepcionista()" routerLink="/clientes" routerLinkActive="active" 
+           [matTooltip]="isCollapsed ? 'Clientes' : ''" matTooltipPosition="right"
+           class="nav-item">
+          <mat-icon>person</mat-icon>
+          <span *ngIf="!isCollapsed">Clientes</span>
+        </a>
+
+        <a *ngIf="esAdmin() || esRecepcionista()" routerLink="/mascotas" routerLinkActive="active" 
+           [matTooltip]="isCollapsed ? 'Pacientes' : ''" matTooltipPosition="right"
+           class="nav-item">
+          <mat-icon>pets</mat-icon>
+          <span *ngIf="!isCollapsed">Pacientes</span>
+        </a>
+
+        <!-- INVENTARIO -->
+        <ng-container *ngIf="esAdmin() || esRecepcionista()">
+          <div class="sidebar-divider"></div>
+          <span class="nav-section-label" *ngIf="!isCollapsed">INVENTARIO</span>
+
+          <a routerLink="/productos" routerLinkActive="active" 
+             [matTooltip]="isCollapsed ? 'Productos e Insumos' : ''" matTooltipPosition="right"
+             class="nav-item">
+            <mat-icon>inventory_2</mat-icon>
+            <span *ngIf="!isCollapsed">Productos e Insumos</span>
+          </a>
+
+          <a *ngIf="esAdmin()" routerLink="/categorias" routerLinkActive="active" 
+             [matTooltip]="isCollapsed ? 'Categorías' : ''" matTooltipPosition="right"
+             class="nav-item">
+            <mat-icon>label</mat-icon>
+            <span *ngIf="!isCollapsed">Categorías</span>
+          </a>
+        </ng-container>
+
+        <!-- Sección Admin -->
+        <ng-container *ngIf="esAdmin()">
+          <div class="sidebar-divider"></div>
+          <span class="nav-section-label" *ngIf="!isCollapsed">ADMINISTRACIÓN</span>
+
+          <a routerLink="/especialidades" routerLinkActive="active" 
+             [matTooltip]="isCollapsed ? 'Especialidades' : ''" matTooltipPosition="right"
+             class="nav-item">
+            <mat-icon>verified</mat-icon>
+            <span *ngIf="!isCollapsed">Especialidades</span>
+          </a>
+
+          <a routerLink="/veterinarios" routerLinkActive="active" 
+             [matTooltip]="isCollapsed ? 'Veterinarios' : ''" matTooltipPosition="right"
+             class="nav-item">
+            <mat-icon>badge</mat-icon>
+            <span *ngIf="!isCollapsed">Veterinarios</span>
+          </a>
+
+          <a routerLink="/usuarios" routerLinkActive="active" 
+             [matTooltip]="isCollapsed ? 'Usuarios' : ''" matTooltipPosition="right"
+             class="nav-item">
+            <mat-icon>manage_accounts</mat-icon>
+            <span *ngIf="!isCollapsed">Usuarios</span>
+          </a>
+
+          <a routerLink="/configuracion-entorno" routerLinkActive="active" 
+             [matTooltip]="isCollapsed ? 'Configuración Tema' : ''" matTooltipPosition="right"
+             class="nav-item">
+            <mat-icon>palette</mat-icon>
+            <span *ngIf="!isCollapsed">Configuración Tema</span>
+          </a>
+        </ng-container>
+
+
+
+      </nav>
+
+      <!-- Footer: Logout -->
+      <div class="sidebar-footer">
+        <div class="sidebar-divider"></div>
+        <a class="nav-item logout-item" (click)="logout()"
+           [matTooltip]="isCollapsed ? 'Cerrar Sesion' : ''" matTooltipPosition="right">
+          <mat-icon>power_settings_new</mat-icon>
+          <span *ngIf="!isCollapsed">Cerrar Sesion</span>
+        </a>
+      </div>
+
+    </div>
+  </mat-sidenav>
+
+  <!-- CONTENIDO -->
+  <mat-sidenav-content class="content-area">
+    <div class="page-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+
+</mat-sidenav-container>

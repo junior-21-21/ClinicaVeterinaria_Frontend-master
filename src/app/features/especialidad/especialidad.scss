@@ -1,0 +1,135 @@
+/* Custom Styles for an Elegant Interface */
+
+.container-fluid {
+  max-width: 1400px;
+}
+
+/* --- Card Styles --- */
+.card-vet {
+  background: #ffffff;
+  border: none;
+  border-radius: 1rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05); /* Soft shadow */
+  overflow: hidden;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.card-vet:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.1);
+}
+
+.card-header-simple {
+  background-color: transparent;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* --- Specialty Grid Card --- */
+.specialty-card {
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.specialty-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  border-color: rgba(var(--bs-primary-rgb), 0.3);
+}
+
+.specialty-icon-wrapper {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(
+    135deg,
+    #e0f2fe 0%,
+    #bae6fd 100%
+  ); /* Light Blue Gradient */
+  color: #0284c7; /* Darker Blue */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.specialty-card:hover .specialty-icon-wrapper {
+  transform: scale(1.1) rotate(10deg);
+}
+
+.specialty-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1e293b; /* Slate 800 */
+  margin-bottom: 0.5rem;
+}
+
+.specialty-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Form Styles */
+.form-control.form-control-lg {
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.form-control:focus {
+  box-shadow: 0 0 0 3px rgba(var(--bs-primary-rgb), 0.15);
+  border-color: var(--bs-primary);
+}
+
+/* Buttons */
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.btn-primary-soft {
+  background-color: #e0f2fe;
+  color: #0284c7;
+  border: none;
+}
+.btn-primary-soft:hover {
+  background-color: #0284c7;
+  color: white;
+}
+
+.btn-danger-soft {
+  background-color: #fee2e2;
+  color: #ef4444;
+  border: none;
+}
+.btn-danger-soft:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+/* Empty State */
+.empty-state-icon {
+  font-size: 4rem;
+  color: #cbd5e1;
+  margin-bottom: 1rem;
+}
